@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>눈꽃별 모험가 카드</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#120e26;--panel:#241a4d;--panel2:#33276b;--line:#b79cff;--text:#f4efff;--mute:#a99fd0;--pink:#ff8fc7;
+--mental:#9b7cf0;--luck:#ffc857;--sense:#5fd3c4;--mood:#ff8fc7}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Jua","Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:17px;line-height:1.5}
+body{min-height:100vh;overflow-x:hidden}
+.snow{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.snow i{position:absolute;top:-20px;color:#fff;opacity:.35;font-style:normal;animation:fall linear infinite}
+@keyframes fall{to{transform:translateY(110vh) rotate(180deg)}}
+main{position:relative;max-width:520px;margin:0 auto;padding:20px 16px 48px}
+h1{margin:6px 0 2px;font-size:28px;font-weight:400}
+.sub{margin:0 0 18px;color:var(--mute);font-size:15px}
+.win{background:var(--line);padding:3px;margin:0 0 18px;clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 16px,100% calc(100% - 16px),calc(100% - 16px) 100%,16px 100%,0 calc(100% - 16px),0 16px)}
+.win>.in{background:var(--panel);clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px)}
+.win header{background:var(--panel2);padding:8px 18px;text-align:center;font-size:18px;border-bottom:2px solid var(--line)}
+.win .body{padding:16px 18px 18px}
+.row{margin:0 0 14px}
+.row .top{display:flex;justify-content:space-between;align-items:baseline}
+.row .nm{font-size:19px}
+.row .d{color:var(--mute);font-size:13px;margin-left:6px}
+.row .v{font-size:19px}
+.bar{height:14px;background:#171033;border:2px solid var(--line);border-radius:9px;overflow:hidden;margin-top:4px}
+.bar b{display:block;height:100%;width:0;background:var(--c);transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.lv{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.lv .n{font-size:36px;line-height:1;color:var(--pink)}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.badge{background:var(--pink);color:#2a1346;padding:2px 12px;border-radius:14px;font-size:15px}
+.badge.none{background:#171033;color:var(--mute);border:2px dashed var(--line)}
+button,input{font:inherit;color:inherit}
+button{background:var(--pink);color:#2a1346;border:0;border-radius:12px;padding:10px 18px;cursor:pointer;font-size:18px}
+button.ghost{background:transparent;color:var(--text);border:2px solid var(--line)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #fff;outline-offset:2px}
+input{background:#171033;border:2px solid var(--line);border-radius:10px;padding:9px 12px;width:100%}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.big{text-align:center;padding:6px 0 10px}
+.big .gain{font-size:52px;line-height:1.1;color:var(--c)}
+.big .msg{color:var(--mute);margin:4px 0 0}
+.err{color:var(--pink);min-height:1.5em;margin:6px 0 0;font-size:15px}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pop{animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.8);opacity:0}}
+ul.log{list-style:none;margin:0;padding:0}
+ul.log li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed #4a3c8c;font-size:15px}
+ul.log li span:last-child{white-space:nowrap}
+details{margin:0 0 18px;color:var(--mute);font-size:15px}
+summary{cursor:pointer}
+textarea{width:100%;background:#171033;border:2px solid var(--line);border-radius:10px;color:var(--text);padding:8px;font:inherit;font-size:14px}
+code{background:#171033;padding:1px 6px;border-radius:6px;word-break:break-all}
+.note{color:var(--mute);font-size:14px;margin:8px 0 0}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){.snow{display:none}.bar b{transition:none}.pop,.shake{animation:none}}
+</style>
+</head>
+<body>
+<div class="snow" id="snow" aria-hidden="true"></div>
+<main>
+  <h1>❄ 눈꽃별 모험가 카드</h1>
+  <p class="sub">영상 끝까지 보면 스탯이 올라요. 영상 하나당 한 번만 받을 수 있어요.</p>
+
+  <section id="claim" hidden></section>
+
+  <section id="card" class="win"><div class="in">
+    <header id="cardHead">모험가 카드</header>
+    <div class="body">
+      <div class="lv"><div class="n" id="lv">Lv.1</div><div><div id="who">이름 없는 모험가</div><div class="d" style="color:var(--mute);font-size:14px" id="total"></div></div></div>
+      <div class="badges" id="badges"></div>
+      <div id="stats"></div>
+      <div class="btns">
+        <button id="copy">댓글용 스탯 복사</button>
+        <button class="ghost" id="rename">이름 정하기</button>
+      </div>
+      <p class="note" id="copied" hidden>복사했어요! 고정 댓글에 붙여 넣어 주세요.</p>
+    </div>
+  </div></section>
+
+  <section class="win"><div class="in">
+    <header>받은 보상</header>
+    <div class="body"><ul class="log" id="log"></ul></div>
+  </div></section>
+
+  <details>
+    <summary>기기를 바꿔도 이어서 하고 싶어요</summary>
+    <p class="note">기록은 이 기기의 브라우저에 저장돼요. 아래 기록 코드를 복사해 두면 다른 기기에서 불러올 수 있어요.</p>
+    <textarea id="bk" rows="3" readonly></textarea>
+    <div class="btns"><button class="ghost" id="bkCopy">기록 코드 복사</button></div>
+    <p class="note">불러오기: 코드를 아래에 붙여 넣으세요.</p>
+    <textarea id="imp" rows="2" placeholder="기록 코드 붙여넣기"></textarea>
+    <div class="btns"><button class="ghost" id="impGo">불러오기</button></div>
+    <p class="err" id="impErr"></p>
+  </details>
+
+  <details id="admin" hidden>
+    <summary>제작자 도구 (주소 끝에 ?admin)</summary>
+    <p class="note">영상 ID와 영상 끝에 보여줄 코드를 넣으면 설정 파일에 넣을 값과 QR용 주소를 만들어 줘요.</p>
+    <input id="aId" placeholder="영상 ID (예: horror01)" style="margin-bottom:8px">
+    <input id="aCode" placeholder="영상 끝 코드 (예: SNOW7K)">
+    <p class="note">설정에 넣을 값: <code id="aHash">-</code></p>
+    <p class="note">QR에 넣을 주소: <code id="aUrl">-</code></p>
+  </details>
+</main>
+
+<script>
+/* ===== 제작자 설정 =====
+   영상을 올릴 때마다 한 줄씩 추가하세요.
+   id: 영상 구분 이름 / stat: mental, luck, sense, mood / gain: 올라가는 수치
+   h: 해시값 (제작자 도구 ?admin 에서 만들어요). 아래 4개는 연습용이에요.
+   연습용 코드: demo1=MENTAL, demo2=LUCKY, demo3=SENSE, demo4=MOOD */
+const VIDEOS = {
+  demo1:{title:"[멘탈 +10] 비명 지르면 처음부터! (연습용)",stat:"mental",gain:10,h:"rdmw0abwcf"},
+  demo2:{title:"[운빨 +10] 희귀 펫 안 나오면 방종 불가 (연습용)",stat:"luck",gain:10,h:"2a2vvbfim2r"},
+  demo3:{title:"[눈치 +10] 머더 3연속 찾기 (연습용)",stat:"sense",gain:10,h:"1z5c73ygvn7"},
+  demo4:{title:"[감성 +10] 신곡 MV 공개 (연습용)",stat:"mood",gain:10,h:"85g0yo76ft"}
+};
+const STATS={
+  mental:{n:"멘탈",d:"안 쫄리는 힘",c:"var(--mental)"},
+  luck:{n:"운빨",d:"운이 좋은 정도",c:"var(--luck)"},
+  sense:{n:"눈치",d:"알아채는 힘",c:"var(--sense)"},
+  mood:{n:"감성",d:"마음이 말랑한 정도",c:"var(--mood)"}
+};
+const MAX=100, KEY="snowstar.card.v1";
+
+/* ===== 저장 ===== */
+let S={name:"",claims:{}};
+try{const r=JSON.parse(localStorage.getItem(KEY)||"null");if(r&&r.claims)S=r;}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+/* ===== 계산 ===== */
+function H(s){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0,c;i<s.length;i++){c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
+h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+return (4294967296*(2097151&h2)+(h1>>>0)).toString(36);}
+const norm=c=>String(c||"").toUpperCase().replace(/\s+/g,"");
+function stats(){const s={mental:0,luck:0,sense:0,mood:0};
+  for(const id in S.claims){const v=VIDEOS[id];if(v)s[v.stat]+=v.gain;}return s;}
+function titles(s){const t=[];
+  if(s.mental>=MAX)t.push("강철 멘탈");if(s.luck>=MAX)t.push("눈꽃별의 행운아");
+  if(s.sense>=MAX)t.push("눈치 만렙");if(s.mood>=MAX)t.push("별빛 수집가");
+  if(Object.values(s).every(v=>v>=50))t.push("눈꽃별의 모험가");return t;}
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ===== 소리 ===== */
+function ding(){try{const a=new(window.AudioContext||window.webkitAudioContext)();
+  [880,1175,1568].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+i*.09;
+    o.type="triangle";o.frequency.value=f;g.gain.setValueAtTime(.0001,t);
+    g.gain.exponentialRampToValueAtTime(.2,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.26);
+    o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+.3);});}catch(e){}}
+
+/* ===== 카드 그리기 ===== */
+function statRows(s,from){return Object.keys(STATS).map(k=>{const m=STATS[k];
+  return `<div class="row" style="--c:${m.c}"><div class="top"><span><span class="nm">${m.n}</span><span class="d">${m.d}</span></span><span class="v">${s[k]} / ${MAX}</span></div>
+  <div class="bar"><b data-w="${Math.min(100,s[k]/MAX*100)}" style="width:${from?Math.min(100,from[k]/MAX*100):0}%"></b></div></div>`;}).join("");}
+function grow(root){requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  root.querySelectorAll(".bar b").forEach(b=>b.style.width=b.dataset.w+"%");}));}
+function render(from){
+  const s=stats(),total=Object.values(s).reduce((a,b)=>a+b,0),t=titles(s);
+  $("lv").textContent="Lv."+(1+Math.floor(total/20));
+  $("who").textContent=S.name||"이름 없는 모험가";
+  $("total").textContent="누적 스탯 "+total;
+  $("badges").innerHTML=t.length?t.map(x=>`<span class="badge">${esc(x)}</span>`).join(""):`<span class="badge none">칭호 없음 (스탯 100이면 칭호!)</span>`;
+  $("stats").innerHTML=statRows(s,from);grow($("stats"));
+  const ids=Object.keys(S.claims).filter(id=>VIDEOS[id]).sort((a,b)=>S.claims[b]-S.claims[a]);
+  $("log").innerHTML=ids.length?ids.map(id=>{const v=VIDEOS[id],m=STATS[v.stat];
+    return `<li><span>${esc(v.title)}</span><span style="color:${m.c}">${m.n} +${v.gain}</span></li>`;}).join("")
+    :`<li><span style="color:var(--mute)">아직 받은 보상이 없어요. 영상 끝에 나오는 코드를 찾아보세요!</span></li>`;
+  $("bk").value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+}
+function summary(){const s=stats(),t=titles(s);
+  return `${S.name||"모험가"} | 멘탈 ${s.mental} / 운빨 ${s.luck} / 눈치 ${s.sense} / 감성 ${s.mood}`+(t.length?` | ${t.join(", ")}`:"");}
+
+/* ===== 보상 받기 ===== */
+function showClaim(id,pre){
+  const v=VIDEOS[id],box=$("claim");box.hidden=false;
+  if(!v){box.className="win";box.innerHTML=`<div class="in"><header>앗, 영상을 못 찾았어요</header><div class="body"><p>주소가 잘못됐거나 아직 준비 중인 영상이에요. 영상 설명란의 링크를 다시 눌러 주세요.</p></div></div>`;return;}
+  const m=STATS[v.stat];box.className="win pop";
+  if(S.claims[id]){box.innerHTML=`<div class="in"><header>이미 받은 보상이에요</header><div class="body"><p>${esc(v.title)}</p><p class="note">영상 하나당 한 번만 받을 수 있어요. 다른 영상에서 더 모아 봐요!</p></div></div>`;return;}
+  box.innerHTML=`<div class="in"><header>퀘스트 클리어!</header><div class="body" style="--c:${m.c}">
+    <p style="margin:0 0 10px">${esc(v.title)}</p>
+    <input id="code" placeholder="영상 끝에 나온 코드" value="${esc(pre||"")}" autocomplete="off" autocapitalize="characters" aria-label="영상 끝 코드">
+    <p class="err" id="cerr"></p>
+    <div class="btns"><button id="go">보상 받기</button></div></div></div>`;
+  const go=()=>{
+    if(H(id+":"+norm($("code").value))!==v.h){$("cerr").textContent="코드가 달라요. 영상 끝까지 보면 나와요!";
+      box.classList.remove("shake");void box.offsetWidth;box.classList.add("shake");return;}
+    const from=stats();S.claims[id]=Date.now();save();ding();
+    box.innerHTML=`<div class="in"><header>스탯 획득!</header><div class="body big" style="--c:${m.c}">
+      <p class="msg">이 영상을 끝까지 본 당신,</p><div class="gain">${m.n} +${v.gain}</div>
+      <p class="msg">${esc(m.d)}이 올라갔어요</p></div></div>`;
+    box.className="win pop";render(from);
+    history.replaceState(null,"",location.pathname);
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
+  $("go").onclick=go;$("code").onkeydown=e=>{if(e.key==="Enter")go();};
+}
+
+/* ===== 이벤트 ===== */
+function copyText(t,ok){
+  const done=()=>{ok.hidden=false;setTimeout(()=>ok.hidden=true,2500);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,()=>fb());}else fb();
+  function fb(){const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();try{document.execCommand("copy");done();}catch(e){}a.remove();}
+}
+$("copy").onclick=()=>copyText(summary(),$("copied"));
+$("rename").onclick=()=>{const n=prompt("모험가 이름을 정해 주세요 (최대 12자)",S.name||"");
+  if(n!==null){S.name=n.trim().slice(0,12);save();render();}};
+$("bkCopy").onclick=()=>{$("bk").select();copyText($("bk").value,$("copied"));};
+$("impGo").onclick=()=>{try{
+  const o=JSON.parse(decodeURIComponent(escape(atob($("imp").value.trim()))));
+  if(!o||typeof o.claims!=="object")throw 0;
+  for(const id in o.claims)if(!S.claims[id])S.claims[id]=o.claims[id];
+  if(o.name&&!S.name)S.name=String(o.name).slice(0,12);
+  save();render();$("impErr").textContent="불러왔어요!";
+}catch(e){$("impErr").textContent="코드를 읽을 수 없어요. 처음부터 끝까지 복사했는지 확인해 주세요.";}};
+
+/* 제작자 도구 */
+const P=new URLSearchParams(location.search);
+if(P.has("admin")){$("admin").hidden=false;$("admin").open=true;
+  const up=()=>{const id=$("aId").value.trim(),c=norm($("aCode").value);
+    $("aHash").textContent=id&&c?H(id+":"+c):"-";
+    $("aUrl").textContent=id&&c?location.origin+location.pathname+"?v="+encodeURIComponent(id)+"&c="+encodeURIComponent(c):"-";};
+  $("aId").oninput=up;$("aCode").oninput=up;}
+
+/* 눈 내리는 배경 */
+(function(){const w=$("snow");for(let i=0;i<14;i++){const e=document.createElement("i");e.textContent="❄";
+  e.style.left=Math.random()*100+"%";e.style.fontSize=(10+Math.random()*14)+"px";
+  e.style.animationDuration=(9+Math.random()*10)+"s";e.style.animationDelay=(-Math.random()*15)+"s";w.appendChild(e);}})();
+
+render();
+if(P.get("v"))showClaim(P.get("v"),P.get("c"));
+</script>
+</body>
+</html>

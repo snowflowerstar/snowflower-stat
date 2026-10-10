@@ -60,6 +60,11 @@ textarea{width:100%;background:#171033;border:2px solid var(--line);border-radiu
 code{background:#171033;padding:1px 6px;border-radius:6px;word-break:break-all}
 .note{color:var(--mute);font-size:14px;margin:8px 0 0}
 [hidden]{display:none!important}
+select{font:inherit;color:inherit;background:#171033;border:2px solid var(--line);border-radius:10px;padding:9px 12px;width:100%;margin-bottom:8px}
+.tt{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;background:#171033;color:var(--text);border:2px solid var(--line);border-radius:12px;padding:8px 12px;margin:0 0 8px;font-size:17px}
+.tt.on{background:var(--pink);color:#2a1346;border-color:var(--pink)}
+.tt small{display:block;font-size:13px;opacity:.75}
+.tt .s{white-space:nowrap;font-size:14px}
 @media (prefers-reduced-motion:reduce){.snow{display:none}.bar b,.bar i{transition:none}.pop,.shake{animation:none}}
 </style>
 </head>
@@ -87,6 +92,11 @@ code{background:#171033;padding:1px 6px;border-radius:6px;word-break:break-all}
   </div></section>
 
   <section class="win"><div class="in">
+    <header>내 칭호</header>
+    <div class="body"><div id="ttl"></div><p class="note">받은 칭호 중 하나를 눌러 달아 보세요. 다시 누르면 내려요.</p></div>
+  </div></section>
+
+  <section class="win"><div class="in">
     <header>받은 보상</header>
     <div class="body"><ul class="log" id="log"></ul></div>
   </div></section>
@@ -104,9 +114,10 @@ code{background:#171033;padding:1px 6px;border-radius:6px;word-break:break-all}
 
   <details id="admin" hidden>
     <summary>제작자 도구 (주소 끝에 ?admin)</summary>
-    <p class="note">영상 ID와 영상 끝에 보여줄 코드를 넣으면 설정 파일에 넣을 값과 QR용 주소를 만들어 줘요.</p>
-    <input id="aId" placeholder="영상 ID (예: horror01)" style="margin-bottom:8px">
-    <input id="aCode" placeholder="영상 끝 코드 (예: SNOW7K)">
+    <p class="note">종류를 고르고 이름표(ID)와 코드를 넣으면 설정 파일에 넣을 값과 QR용 주소를 만들어 줘요.</p>
+    <select id="aKind" aria-label="종류"><option value="v">영상 (스탯)</option><option value="t">칭호</option></select>
+    <input id="aId" placeholder="이름표 ID (영상 예: v01, 칭호 예: t01)" style="margin-bottom:8px">
+    <input id="aCode" placeholder="코드 (예: SNOW7K)">
     <p class="note">설정에 넣을 값: <code id="aHash">-</code></p>
     <p class="note">QR에 넣을 주소: <code id="aUrl">-</code></p>
   </details>
@@ -124,6 +135,15 @@ const VIDEOS = {
   demo3:{title:"[눈치 +10] 머더 3연속 찾기 (연습용)",stat:"sense",gain:10,h:"1z5c73ygvn7"},
   demo4:{title:"[감성 +10] 신곡 MV 공개 (연습용)",stat:"mood",gain:10,h:"85g0yo76ft"}
 };
+/* ===== 칭호 설정 =====
+   칭호는 영상과 따로 주는 상이에요. 링크 하나로 한 번씩만 받아요.
+   name: 보이는 칭호 / desc: 설명 / h: 해시값 (?admin 에서 종류를 '칭호'로 만들어요)
+   링크: 사이트주소/?t=이름표 (코드 입력) , QR용: ?t=이름표&c=코드
+   아래 2개는 연습용이에요. 코드: t_demo1=FIRST , t_demo2=STAR */
+const TITLES = {
+  t_demo1:{name:"첫 모험의 시작",desc:"연습용 칭호",h:"112ekbsiqne"},
+  t_demo2:{name:"별빛 수집가",desc:"연습용 칭호",h:"1vpvtavln4b"}
+};
 const STATS={
   mental:{n:"멘탈",d:"안 쫄리는 힘",c:"var(--mental)"},
   luck:{n:"운빨",d:"운이 좋은 정도",c:"var(--luck)"},
@@ -135,6 +155,7 @@ const MAX=100, KEY="snowstar.card.v1";
 /* ===== 저장 ===== */
 let S={name:"",claims:{}};
 try{const r=JSON.parse(localStorage.getItem(KEY)||"null");if(r&&r.claims)S=r;}catch(e){}
+S.titles=S.titles||{};S.equip=S.equip||"";
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 
 /* ===== 계산 ===== */
@@ -145,10 +166,6 @@ return (4294967296*(2097151&h2)+(h1>>>0)).toString(36);}
 const norm=c=>String(c||"").toUpperCase().replace(/\s+/g,"");
 function stats(){const s={mental:0,luck:0,sense:0,mood:0};
   for(const id in S.claims){const v=VIDEOS[id];if(v)s[v.stat]+=v.gain;}return s;}
-function titles(s){const t=[];
-  if(s.mental>=MAX)t.push("강철 멘탈");if(s.luck>=MAX)t.push("눈꽃별의 행운아");
-  if(s.sense>=MAX)t.push("눈치 만렙");if(s.mood>=MAX)t.push("별빛 수집가");
-  if(Object.values(s).every(v=>v>=50))t.push("눈꽃별의 모험가");return t;}
 const level=s=>1+Math.floor(Math.min(...Object.values(s))/MAX);
 const disp=s=>{const o={},d=(level(s)-1)*MAX;for(const k in s)o[k]=s[k]-d;return o;};
 const $=id=>document.getElementById(id);
@@ -169,11 +186,13 @@ function statRows(s,from){return Object.keys(STATS).map(k=>{const m=STATS[k],v=s
 function grow(root){requestAnimationFrame(()=>requestAnimationFrame(()=>{
   root.querySelectorAll(".bar b,.bar i").forEach(b=>b.style.width=b.dataset.w+"%");}));}
 function render(from){
-  const s=stats(),total=Object.values(s).reduce((a,b)=>a+b,0),t=titles(s);
+  const s=stats(),total=Object.values(s).reduce((a,b)=>a+b,0);
   const lv=level(s),d=disp(s);$("lv").textContent="Lv."+lv;
   if(document.activeElement!==$("who"))$("who").value=S.name||"";
   $("total").textContent="누적 "+total+" · Lv."+(lv+1)+"까지 "+Object.keys(STATS).filter(k=>d[k]<MAX).map(k=>STATS[k].n+" "+(MAX-d[k])).join(", ")+" 남음";
-  $("badges").innerHTML=t.length?t.map(x=>`<span class="badge">${esc(x)}</span>`).join(""):`<span class="badge none">칭호 없음 (스탯 100이면 칭호!)</span>`;
+  const eq=TITLES[S.equip],own=Object.keys(S.titles).filter(i=>TITLES[i]);
+  $("badges").innerHTML=eq?`<span class="badge">${esc(eq.name)}</span>`:`<span class="badge none">${own.length?"아래에서 칭호를 골라 보세요":"칭호 없음"}</span>`;
+  $("ttl").innerHTML=own.length?own.map(i=>`<button class="tt${i===S.equip?" on":""}" data-id="${esc(i)}"><span>${esc(TITLES[i].name)}<small>${esc(TITLES[i].desc||"")}</small></span><span class="s">${i===S.equip?"달고 있어요":"달기"}</span></button>`).join(""):`<p class="note" style="margin:0">아직 칭호가 없어요. 이벤트나 영상에서 칭호 링크를 찾아보세요!</p>`;
   $("stats").innerHTML=statRows(d,from);grow($("stats"));
   const ids=Object.keys(S.claims).filter(id=>VIDEOS[id]).sort((a,b)=>S.claims[b]-S.claims[a]);
   $("log").innerHTML=ids.length?ids.map(id=>{const v=VIDEOS[id],m=STATS[v.stat];
@@ -181,8 +200,8 @@ function render(from){
     :`<li><span style="color:var(--mute)">아직 받은 보상이 없어요. 영상 끝에 나오는 코드를 찾아보세요!</span></li>`;
   $("bk").value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));
 }
-function summary(){const r=stats(),t=titles(r),s=disp(r);
-  return `${S.name||"모험가"} Lv.${level(r)} | 멘탈 ${s.mental} / 운빨 ${s.luck} / 눈치 ${s.sense} / 감성 ${s.mood}`+(t.length?` | ${t.join(", ")}`:"");}
+function summary(){const r=stats(),s=disp(r),tt=TITLES[S.equip];
+  return `${S.name||"모험가"} Lv.${level(r)} | 멘탈 ${s.mental} / 운빨 ${s.luck} / 눈치 ${s.sense} / 감성 ${s.mood}`+(tt?` | ${tt.name}`:"");}
 
 /* ===== 보상 받기 ===== */
 function showClaim(id,pre){
@@ -209,7 +228,26 @@ function showClaim(id,pre){
   $("go").onclick=go;$("code").onkeydown=e=>{if(e.key==="Enter")go();};
 }
 
+function showTitle(id,pre){
+  const v=TITLES[id],box=$("claim");box.hidden=false;box.className="win pop";
+  if(!v){box.innerHTML=`<div class="in"><header>앗, 칭호를 못 찾았어요</header><div class="body"><p>주소가 잘못됐거나 아직 준비 중인 칭호예요.</p></div></div>`;return;}
+  if(S.titles[id]){box.innerHTML=`<div class="in"><header>이미 받은 칭호예요</header><div class="body"><p>${esc(v.name)}</p><p class="note">아래 '내 칭호'에서 달 수 있어요.</p></div></div>`;return;}
+  box.innerHTML=`<div class="in"><header>칭호 도착!</header><div class="body"><p style="margin:0 0 10px">${esc(v.name)}<br><span class="note">${esc(v.desc||"")}</span></p>
+    <input id="code" placeholder="칭호 코드" value="${esc(pre||"")}" autocomplete="off" autocapitalize="characters" aria-label="칭호 코드">
+    <p class="err" id="cerr"></p><div class="btns"><button id="go">칭호 받기</button></div></div></div>`;
+  const go=()=>{
+    if(H("t:"+id+":"+norm($("code").value))!==v.h){$("cerr").textContent="코드가 달라요.";
+      box.classList.remove("shake");void box.offsetWidth;box.classList.add("shake");return;}
+    S.titles[id]=Date.now();if(!S.equip)S.equip=id;save();ding();
+    box.innerHTML=`<div class="in"><header>칭호 획득!</header><div class="body big" style="--c:var(--pink)"><p class="msg">새 칭호를 받았어요</p><div class="gain">${esc(v.name)}</div><p class="msg">아래 '내 칭호'에서 바꿔 달 수 있어요</p></div></div>`;
+    box.className="win pop";render(disp(stats()));history.replaceState(null,"",location.pathname);window.scrollTo({top:0,behavior:"smooth"});
+  };
+  $("go").onclick=go;$("code").onkeydown=e=>{if(e.key==="Enter")go();};
+}
+
 /* ===== 이벤트 ===== */
+$("ttl").onclick=e=>{const b=e.target.closest(".tt");if(!b)return;
+  S.equip=S.equip===b.dataset.id?"":b.dataset.id;save();render(disp(stats()));};
 function copyText(t,ok){
   const done=()=>{ok.hidden=false;setTimeout(()=>ok.hidden=true,2500);};
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,()=>fb());}else fb();
@@ -224,15 +262,18 @@ $("impGo").onclick=()=>{try{
   if(!o||typeof o.claims!=="object")throw 0;
   for(const id in o.claims)if(!S.claims[id])S.claims[id]=o.claims[id];
   if(o.name&&!S.name)S.name=String(o.name).slice(0,12);
+  for(const id in (o.titles||{}))if(!S.titles[id])S.titles[id]=o.titles[id];
+  if(o.equip&&!S.equip)S.equip=o.equip;
   save();render();$("impErr").textContent="불러왔어요!";
 }catch(e){$("impErr").textContent="코드를 읽을 수 없어요. 처음부터 끝까지 복사했는지 확인해 주세요.";}};
 
 /* 제작자 도구 */
 const P=new URLSearchParams(location.search);
 if(P.has("admin")){$("admin").hidden=false;$("admin").open=true;
-  const up=()=>{const id=$("aId").value.trim(),c=norm($("aCode").value);
-    $("aHash").textContent=id&&c?H(id+":"+c):"-";
-    $("aUrl").textContent=id&&c?location.origin+location.pathname+"?v="+encodeURIComponent(id)+"&c="+encodeURIComponent(c):"-";};
+  const up=()=>{const id=$("aId").value.trim(),c=norm($("aCode").value),k=$("aKind").value;
+    $("aHash").textContent=id&&c?H((k==="t"?"t:":"")+id+":"+c):"-";
+    $("aUrl").textContent=id&&c?location.origin+location.pathname+"?"+k+"="+encodeURIComponent(id)+"&c="+encodeURIComponent(c):"-";};
+  $("aKind").onchange=up;
   $("aId").oninput=up;$("aCode").oninput=up;}
 
 /* 눈 내리는 배경 */
@@ -242,6 +283,7 @@ if(P.has("admin")){$("admin").hidden=false;$("admin").open=true;
 
 render();
 if(P.get("v"))showClaim(P.get("v"),P.get("c"));
+else if(P.get("t"))showTitle(P.get("t"),P.get("c"));
 </script>
 </body>
 </html>

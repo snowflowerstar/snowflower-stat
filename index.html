@@ -125,24 +125,20 @@ select{font:inherit;color:inherit;background:#171033;border:2px solid var(--line
 
 <script>
 /* ===== 제작자 설정 =====
-   영상을 올릴 때마다 한 줄씩 추가하세요.
-   id: 영상 구분 이름 / stat: mental, luck, sense, mood / gain: 올라가는 수치
-   h: 해시값 (제작자 도구 ?admin 에서 만들어요). 아래 4개는 연습용이에요.
-   연습용 코드: demo1=MENTAL, demo2=LUCKY, demo3=SENSE, demo4=MOOD */
+   영상을 올릴 때마다 한 줄씩 추가하세요. (줄 끝 쉼표 꼭!)
+   stat: mental(멘탈), luck(운빨), sense(눈치), mood(감성) / gain: 올라가는 수치
+   badge: (선택) 이 영상 보상과 함께 줄 칭호 이름표 (아래 TITLES에 있는 것)
+   h: 해시값 (주소 끝에 ?admin 을 붙여 만들어요) */
 const VIDEOS = {
-  demo1:{title:"[멘탈 +10] 비명 지르면 처음부터! (연습용)",stat:"mental",gain:10,h:"rdmw0abwcf"},
-  demo2:{title:"[운빨 +10] 희귀 펫 안 나오면 방종 불가 (연습용)",stat:"luck",gain:10,h:"2a2vvbfim2r"},
-  demo3:{title:"[눈치 +10] 머더 3연속 찾기 (연습용)",stat:"sense",gain:10,h:"1z5c73ygvn7"},
-  demo4:{title:"[감성 +10] 신곡 MV 공개 (연습용)",stat:"mood",gain:10,h:"85g0yo76ft"}
+  v01:{title:"[감성 +10] 눈꽃별 PV 공개 (오픈 기념)",stat:"mood",gain:10,badge:"t01",h:"229wzw4yo1o"}
 };
+
 /* ===== 칭호 설정 =====
    칭호는 영상과 따로 주는 상이에요. 링크 하나로 한 번씩만 받아요.
    name: 보이는 칭호 / desc: 설명 / h: 해시값 (?admin 에서 종류를 '칭호'로 만들어요)
-   링크: 사이트주소/?t=이름표 (코드 입력) , QR용: ?t=이름표&c=코드
-   아래 2개는 연습용이에요. 코드: t_demo1=FIRST , t_demo2=STAR */
+   링크: 사이트주소/?t=이름표 (코드 입력) , QR용: ?t=이름표&c=코드 */
 const TITLES = {
-  t_demo1:{name:"첫 모험의 시작",desc:"연습용 칭호",h:"112ekbsiqne"},
-  t_demo2:{name:"별빛 수집가",desc:"연습용 칭호",h:"1vpvtavln4b"}
+  t01:{name:"시작의 눈송이",desc:"오픈 기념 한정 칭호",h:"13je1zkxbz5"}
 };
 const STATS={
   mental:{n:"멘탈",d:"안 쫄리는 힘",c:"var(--mental)"},
@@ -210,17 +206,21 @@ function showClaim(id,pre){
   const m=STATS[v.stat];box.className="win pop";
   if(S.claims[id]){box.innerHTML=`<div class="in"><header>이미 받은 보상이에요</header><div class="body"><p>${esc(v.title)}</p><p class="note">영상 하나당 한 번만 받을 수 있어요. 다른 영상에서 더 모아 봐요!</p></div></div>`;return;}
   box.innerHTML=`<div class="in"><header>퀘스트 클리어!</header><div class="body" style="--c:${m.c}">
-    <p style="margin:0 0 10px">${esc(v.title)}</p>
+    <p style="margin:0 0 4px">${esc(v.title)}</p>
+    <p class="note" style="margin:0 0 10px">받는 것: ${m.n} +${v.gain}${v.badge&&TITLES[v.badge]?` · 칭호 「${esc(TITLES[v.badge].name)}」`:""}</p>
     <input id="code" placeholder="영상 끝에 나온 코드" value="${esc(pre||"")}" autocomplete="off" autocapitalize="characters" aria-label="영상 끝 코드">
     <p class="err" id="cerr"></p>
     <div class="btns"><button id="go">보상 받기</button></div></div></div>`;
   const go=()=>{
     if(H(id+":"+norm($("code").value))!==v.h){$("cerr").textContent="코드가 달라요. 영상 끝까지 보면 나와요!";
       box.classList.remove("shake");void box.offsetWidth;box.classList.add("shake");return;}
-    const bef=stats(),from=disp(bef);S.claims[id]=Date.now();save();ding();const up=level(stats())>level(bef);
+    const bef=stats(),from=disp(bef);S.claims[id]=Date.now();
+    const bd=v.badge&&TITLES[v.badge]&&!S.titles[v.badge]?TITLES[v.badge]:null;
+    if(bd){S.titles[v.badge]=Date.now();if(!S.equip)S.equip=v.badge;}
+    save();ding();const up=level(stats())>level(bef);
     box.innerHTML=`<div class="in"><header>스탯 획득!</header><div class="body big" style="--c:${m.c}">
       <p class="msg">이 영상을 끝까지 본 당신,</p><div class="gain">${m.n} +${v.gain}</div>
-      <p class="msg">${esc(m.d)}이 올라갔어요</p>${up?`<p class="msg" style="color:var(--pink)">레벨 업! Lv.${level(stats())} · 모든 스탯 -${MAX}</p>`:""}</div></div>`;
+      <p class="msg">${esc(m.d)}이 올라갔어요</p>${up?`<p class="msg" style="color:var(--pink)">레벨 업! Lv.${level(stats())} · 모든 스탯 -${MAX}</p>`:""}${bd?`<p class="msg" style="color:var(--pink)">칭호도 받았어요: ${esc(bd.name)}</p>`:""}</div></div>`;
     box.className="win pop";render(from);
     history.replaceState(null,"",location.pathname);
     window.scrollTo({top:0,behavior:"smooth"});

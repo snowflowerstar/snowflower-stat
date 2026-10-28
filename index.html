@@ -128,9 +128,12 @@ select{font:inherit;color:inherit;background:#171033;border:2px solid var(--line
    영상을 올릴 때마다 한 줄씩 추가하세요. (줄 끝 쉼표 꼭!)
    stat: mental(멘탈), luck(운빨), sense(눈치), mood(감성) / gain: 올라가는 수치
    badge: (선택) 이 영상 보상과 함께 줄 칭호 이름표 (아래 TITLES에 있는 것)
+   msg: (선택) 보상 창에 보여줄 한 줄 문구 (없으면 기본 문구)
    h: 해시값 (주소 끝에 ?admin 을 붙여 만들어요) */
 const VIDEOS = {
-  v01:{title:"[감성 +10] 눈꽃별 PV 공개 (오픈 기념)",stat:"mood",gain:10,badge:"t01",h:"229wzw4yo1o"}
+  v01:{title:"[감성 +10] 눈꽃별 PV 공개 (오픈 기념)",stat:"mood",gain:10,badge:"t01",h:"229wzw4yo1o"},
+  v02:{title:"[운빨 +10] 눈꽃별 Live2D 데뷔",stat:"luck",gain:10,badge:"t02",msg:"데뷔 순간을 만난 행운이 찾아왔어요!",h:"7fbyvar77e"},
+  v03:{title:"[눈치 +10] 눈꽃별 자기소개",stat:"sense",gain:10,msg:"눈꽃별을 더 잘 알아채게 됐어요!",h:"1bv24klfub9"}
 };
 
 /* ===== 칭호 설정 =====
@@ -138,7 +141,7 @@ const VIDEOS = {
    name: 보이는 칭호 / desc: 설명 / h: 해시값 (?admin 에서 종류를 '칭호'로 만들어요)
    링크: 사이트주소/?t=이름표 (코드 입력) , QR용: ?t=이름표&c=코드 */
 const TITLES = {
-  t01:{name:"시작의 눈송이",desc:"오픈 기념 한정 칭호",h:"13je1zkxbz5"}
+  t01:{name:"시작의 눈송이",desc:"오픈 기념 한정 칭호",h:"13je1zkxbz5"},
 };
 const STATS={
   mental:{n:"멘탈",d:"안 쫄리는 힘",c:"var(--mental)"},
@@ -220,7 +223,7 @@ function showClaim(id,pre){
     save();ding();const up=level(stats())>level(bef);
     box.innerHTML=`<div class="in"><header>스탯 획득!</header><div class="body big" style="--c:${m.c}">
       <p class="msg">이 영상을 끝까지 본 당신,</p><div class="gain">${m.n} +${v.gain}</div>
-      <p class="msg">${esc(m.d)}이 올라갔어요</p>${up?`<p class="msg" style="color:var(--pink)">레벨 업! Lv.${level(stats())} · 모든 스탯 -${MAX}</p>`:""}${bd?`<p class="msg" style="color:var(--pink)">칭호도 받았어요: ${esc(bd.name)}</p>`:""}</div></div>`;
+      <p class="msg">${esc(v.msg||(m.d+"이 올라갔어요"))}</p>${up?`<p class="msg" style="color:var(--pink)">레벨 업! Lv.${level(stats())} · 모든 스탯 -${MAX}</p>`:""}${bd?`<p class="msg" style="color:var(--pink)">칭호도 받았어요: ${esc(bd.name)}</p>`:""}</div></div>`;
     box.className="win pop";render(from);
     history.replaceState(null,"",location.pathname);
     window.scrollTo({top:0,behavior:"smooth"});
